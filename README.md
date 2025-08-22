@@ -1,219 +1,215 @@
-# 🗣️ ChatTTS-Forge
+[cn](./README.md) | [en](./README.en.md) | [Discord Server](https://discord.gg/9XnXUhAy3t)
 
-ChatTTS-Forge 是一个功能强大的文本转语音生成工具，支持通过类 SSML 语法生成丰富的音频长文本，并提供全面的 API 服务，适用于各种场景。
+# 🍦 Speech-AI-Forge
 
-你可以通过以下几种方式体验和部署 ChatTTS-Forge：
+Speech-AI-Forge 是一个围绕 TTS 生成模型开发的项目，实现了 API Server 和 基于 Gradio 的 WebUI。
 
-| -            | 描述                     | 链接                                                                                                                                                             |
-| ------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **在线体验** | 部署于 HuggingFace 中    | [HuggingFace Spaces](https://huggingface.co/spaces/lenML/ChatTTS-Forge)                                                                                          |
-| **一键启动** | 点击按钮，一键启动 Colab | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lenML/ChatTTS-Forge/blob/main/colab.ipynb) |
-| **容器部署** | 查看 docker 部分         | [Docker](#docker)                                                                                                                                                |
-| **本地部署** | 查看环境准备部分         | [本地部署](#本地部署)                                                                                                                                            |
+![banner](./docs/banner.png)
 
-## Features
+你可以通过以下几种方式体验和部署 Speech-AI-Forge：
 
-- **batch 生成**: SSML TTS 接口 / WebUI 支持自动分桶并批量生成。
-- **支持超长文本生成**: webui 和 ssml 接口支持超长文本生成，1000 字也可保持一致性。
-- **风格提示词注入**: 灵活调整输出风格，通过注入提示词实现个性化。
-- **全面的 API 服务**: 所有功能均通过 API 访问，集成方便。
-- **友好的调试 GUI**: 独立于 Gradio 的 playground，简化调试流程。
-- **OpenAI 风格 API**: `/v1/openai/audio/speech` 提供类似 OpenAI 的语音生成接口。
-- **Google 风格 API**: `/v1/google/text:synthesize` 提供类似 Google 的文本合成接口。
-- **类 SSML 支持**: 使用类 SSML 语法创建丰富的音频长文本。
-- **说话人管理**: 通过名称或 ID 高效复用说话人。
-- **风格管理**: 通过名称或 ID 复用说话风格，内置 32 种不同风格。
-- **独立 refine API**: 提供单独的 refine 调试接口，提升调试效率。
-- **文本标准化**: 针对 ChatTTS 优化的文本标准化，解决大部分不支持的 token。
-  - **Markdown**: 自动检测处理 markdown 格式文本
+| -            | 描述                     | 链接                                                                                                                                                               |
+| ------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **在线体验** | 部署于 HuggingFace 中    | [HuggingFace Spaces](https://huggingface.co/spaces/lenML/ChatTTS-Forge)                                                                                            |
+| **一键启动** | 点击按钮，一键启动 Colab | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lenML/Speech-AI-Forge/blob/main/colab.ipynb) |
+| **容器部署** | 查看 docker 部分         | [Docker](#docker)                                                                                                                                                  |
+| **本地部署** | 查看环境准备部分         | [本地部署](#InstallationandRunning)                                                                                                                                |
 
-## Interface
+## Breaking change logs
 
-<table>
-  <tr>
-    <th>项目</th>
-    <th>描述</th>
-    <th>部署或使用方式</th>
-    <th>图片</th>
-  </tr>
-  <tr>
-    <td rowspan="2">API</td>
-    <td>实现了各种形式的tts接口。部署后打开 <code>http://localhost:8000/docs</code> 可查看详细信息。</td>
-    <td>运行 <code>python launch.py</code></td>
-    <td rowspan="2"><img src="./docs/api.png" alt="api"><br><img src="./docs/playground.png" alt="playground"></td>
-  </tr>
-  <tr>
-    <td>实现了一套用于调试 API 的 Playground 前端页面，独立于 Python 代码非 Gradio。</td>
-    <td>部署后打开 <code>http://localhost:8000/playground/index.html</code></td>
-  </tr>
-  <tr>
-    <td>WebUI</td>
-    <td>某些情况可能需要 WebUI（比如 HuggingFace/Colab），这里是一个简单实现。（WebUI中将不会支持对任何本地文件写操作。）</td>
-    <td>运行 <code>python webui.py</code></td>
-    <td><img src="./docs/webui.png" alt="webui"></td>
-  </tr>
-</table>
+- 250702: Support Index-TTS-1.5 [#250](https://github.com/lenML/Speech-AI-Forge/issues/250)
+- 250522: Support GptSoVits [#198](https://github.com/lenML/Speech-AI-Forge/issues/198)
+- 250518: Support SenseVoice ASR [#122](https://github.com/lenML/Speech-AI-Forge/issues/122)
+- 250508: Support Spark-TTS [#223](https://github.com/lenML/Speech-AI-Forge/issues/223)
+- 250507: Support F5TTS-TTS-v1 model [#231](https://github.com/lenML/Speech-AI-Forge/issues/231)
+- 250505: Support Index-TTS [#229](https://github.com/lenML/Speech-AI-Forge/issues/229)
+- 241111: Add `v2/tts` API [#187](https://github.com/lenML/Speech-AI-Forge/issues/187)
+- 241109: Support fishspeech [#191](https://github.com/lenML/Speech-AI-Forge/issues/191)
+- 241015: Support F5TTS v0.6.2 [#176](https://github.com/lenML/Speech-AI-Forge/issues/176)
+- 241009: Support FireRedTTS [#165](https://github.com/lenML/Speech-AI-Forge/issues/165)
+- 240813: Support OpenVoice [#100](https://github.com/lenML/Speech-AI-Forge/issues/100)
+- 240801: Add ASR API [#92](https://github.com/lenML/Speech-AI-Forge/issues/92)
+- 240723: Support CosyVoice [#90](https://github.com/lenML/Speech-AI-Forge/issues/90)
 
-## 本地部署
+## Installation and Running
 
-> f32 模型显存需要 2gb 左右
+首先，确保 [相关依赖](./docs/dependencies.md) 已经正确安装，并查看 [模型下载](#模型下载) 下载所需模型
 
-> f16 仅需 1gb 显存即可运行
+启动：
 
-1. 克隆项目: `git clone https://github.com/lenML/ChatTTS-Forge.git`
-2. 准备模型，放到如下目录
-
-   ![model_dir](./docs/model_dir.png)
-
-   - 自行下载（任选其一）
-
-     - [HuggingFace](https://huggingface.co/2Noise/ChatTTS)
-     - [ModelScope](https://modelscope.cn/models/pzc163/chatTTS/)
-
-   - 使用脚本下载（任选其一）
-     - HuggingFace: 执行 `python ./download_models.py --source huggingface`
-     - ModelScope: 执行 `python ./download_models.py --source modelscope`
-
-3. 安装 ffmpeg: `apt-get install ffmpeg`
-4. 安装 rubberband: `apt-get install rubberband-cli`
-5. 安装 Python 依赖: `python -m pip install -r requirements.txt`
-6. 根据你的需求启动需要的服务，具体启动参数如下。
-
-> 开启 `--half` 可以大幅减少显存占用。如果 batch size 大于 8 建议开启 half。
-
-### launch.py
-
-Launch.py 是 ChatTTS-Forge 的启动脚本，用于配置和启动 API 服务器。
-
-所有参数：
-
-| 参数              | 类型   | 默认值      | 描述                                            |
-| ----------------- | ------ | ----------- | ----------------------------------------------- |
-| `--host`          | `str`  | `"0.0.0.0"` | 服务器主机地址                                  |
-| `--port`          | `int`  | `8000`      | 服务器端口                                      |
-| `--reload`        | `bool` | `False`     | 启用自动重载功能（用于开发）                    |
-| `--compile`       | `bool` | `False`     | 启用模型编译                                    |
-| `--lru_size`      | `int`  | `64`        | 设置请求缓存池的大小；设置为 0 禁用 `lru_cache` |
-| `--cors_origin`   | `str`  | `"*"`       | 允许的 CORS 源，使用 `*` 允许所有源             |
-| `--no_playground` | `bool` | `False`     | 关闭 playground 入口                            |
-| `--no_docs`       | `bool` | `False`     | 关闭 docs 入口                                  |
-| `--half`          | `bool` | `False`     | 开启 f16 半精度推理                             |
-| `--off_tqdm`      | `bool` | `False`     | 关闭 tqdm 进度条                                |
-| `--exclude`       | `str`  | `""`        | 排除不需要的 api                                |
-
-### webui.py
-
-WebUI.py 是一个用于配置和启动 Gradio Web UI 界面的脚本。
-
-所有参数：
-
-| 参数               | 类型   | 默认值      | 描述                                               |
-| ------------------ | ------ | ----------- | -------------------------------------------------- |
-| `--server_name`    | `str`  | `"0.0.0.0"` | 服务器主机地址                                     |
-| `--server_port`    | `int`  | `7860`      | 服务器端口                                         |
-| `--share`          | `bool` | `False`     | 启用共享模式，允许外部访问                         |
-| `--debug`          | `bool` | `False`     | 启用调试模式                                       |
-| `--auth`           | `str`  | `None`      | 用于认证的用户名和密码，格式为 `username:password` |
-| `--half`           | `bool` | `False`     | 开启 f16 半精度推理                                |
-| `--off_tqdm`       | `bool` | `False`     | 关闭 tqdm 进度条                                   |
-| `--tts_max_len`    | `int`  | `1000`      | TTS（文本到语音）的最大文本长度                    |
-| `--ssml_max_len`   | `int`  | `2000`      | SSML（语音合成标记语言）的最大文本长度             |
-| `--max_batch_size` | `int`  | `12`        | TTS 的最大批处理大小                               |
-
-### demo
-
-#### 风格化控制
-
-<details>
-<summary>input</summary>
-
-```xml
-<speak version="0.1">
-    <voice spk="Bob" seed="42" style="narration-relaxed">
-        下面是一个 ChatTTS 用于合成多角色多情感的有声书示例[lbreak]
-    </voice>
-    <voice spk="Bob" seed="42" style="narration-relaxed">
-        黛玉冷笑道：[lbreak]
-    </voice>
-    <voice spk="female2" seed="42" style="angry">
-        我说呢 [uv_break] ，亏了绊住，不然，早就飞起来了[lbreak]
-    </voice>
-    <voice spk="Bob" seed="42" style="narration-relaxed">
-        宝玉道：[lbreak]
-    </voice>
-    <voice spk="Alice" seed="42" style="unfriendly">
-        “只许和你玩 [uv_break] ，替你解闷。不过偶然到他那里，就说这些闲话。”[lbreak]
-    </voice>
-    <voice spk="female2" seed="42" style="angry">
-        “好没意思的话！[uv_break] 去不去，关我什么事儿？ 又没叫你替我解闷儿 [uv_break]，还许你不理我呢” [lbreak]
-    </voice>
-    <voice spk="Bob" seed="42" style="narration-relaxed">
-        说着，便赌气回房去了 [lbreak]
-    </voice>
-</speak>
+```
+python webui.py
 ```
 
-</details>
+### webui features
 
-<details open>
-<summary>output</summary>
-  
-[多角色.webm](https://github.com/lenML/ChatTTS-Forge/assets/37396659/82d91409-ad71-42ac-a4cd-d9c9340e3a07)
+[点我看详细图文介绍](./docs/webui_features.md)
 
-</details>
+- **TTS (文本转语音)**: 提供多种强大的 TTS 功能
 
-#### 长文本生成
+  - **音色切换 (Speaker Switch)**: 可选择不同音色
+    - **内置音色**: 提供多个内置音色，包括 `27 ChatTTS` / `7 CosyVoice` 音色 + `1 参考音色`
+    - **自定义音色上传**: 支持上传自定义音色文件并进行实时推理
+    - **参考音色**: 支持上传参考音频/文本，直接基于参考音频进行 TTS 推理
+  - **风格控制 (Style)**: 内置多种风格控制选项，调整语音风格
+  - **长文本推理 (Long Text)**: 支持超长文本的推理，自动分割文本
+    - **Batch Size**: 支持设置 `Batch size`，提升支持批量推理模型的长文本推理速度
+  - **Refiner**: 支持 `ChatTTS` 原生文本 `refiner`，支持无限长文本处理
+  - **分割器设置 (Splitter)**: 调整分割器配置，控制分割结束符（`eos`）和分割阈值
+  - **调节器 (Adjuster)**: 支持调整 `速度/音调/音量`，并增加 `响度均衡` 功能，优化音频输出
+  - **人声增强 (Voice Enhancer)**: 使用 `Enhancer` 模型增强 TTS 输出，提高语音质量
+  - **生成历史 (Generation History)**: 保存最近三次生成结果，便于对比和选择
+  - **多模型支持 (Multi-model Support)**: 支持多种 TTS 模型推理，包括 `ChatTTS` / `CosyVoice` / `FishSpeech` / `GPT-SoVITS` / `F5-TTS` 等
 
-<details>
-<summary>input</summary>
+- **SSML (语音合成标记语言)**: 提供高级 TTS 合成控制工具
 
-中华美食，作为世界饮食文化的瑰宝，以其丰富的种类、独特的风味和精湛的烹饪技艺而闻名于世。中国地大物博，各地区的饮食习惯和烹饪方法各具特色，形成了独树一帜的美食体系。从北方的京鲁菜、东北菜，到南方的粤菜、闽菜，无不展现出中华美食的多样性。
+  - **分割器 (Splitter)**: 精细控制长文本的分割结果
+  - **Podcast**: 帮助创建 `长文本`、`多角色` 的音频，适合博客或剧本式的语音合成
+  - **From Subtitle**: 从字幕文件生成 SSML 脚本，方便一键生成语音
+  - **脚本编辑器 (Script Editor)**: 新增 SSML 脚本编辑器，支持从分割器（Podcast、来自字幕）导出并编辑 SSML 脚本，进一步优化语音生成效果
 
-在中华美食的世界里，五味调和，色香味俱全。无论是辣味浓郁的川菜，还是清淡鲜美的淮扬菜，都能够满足不同人的口味需求。除了味道上的独特，中华美食还注重色彩的搭配和形态的美感，让每一道菜品不仅是味觉的享受，更是一场视觉的盛宴。
+- **音色管理 (Voice Management)**:
 
-中华美食不仅仅是食物，更是一种文化的传承。每一道菜背后都有着深厚的历史背景和文化故事。比如，北京的烤鸭，代表着皇家气派；而西安的羊肉泡馍，则体现了浓郁的地方风情。中华美食的精髓在于它追求的“天人合一”，讲究食材的自然性和烹饪过程中的和谐。
+  - **音色构建器 (Builder)**: 创建自定义音色，可从 ChatTTS seed 创建音色，或使用参考音频生成音色
+  - **试音功能 (Test Voice)**: 上传音色文件，进行简单的试音和效果评估
+  - **ChatTTS 调试工具**: 专门针对 `ChatTTS` 音色的调试工具
+    - **音色抽卡 (Random Seed)**: 使用随机种子抽取不同的音色，生成独特的语音效果
+    - **音色融合 (Blend)**: 融合不同种子创建的音色，获得新的语音效果
+  - **音色 Hub**: 从音色库中选择并下载音色到本地，访问音色仓库 [Speech-AI-Forge-spks](https://github.com/lenML/Speech-AI-Forge-spks) 获取更多音色资源
 
-总之，中华美食博大精深，其丰富的口感和多样的烹饪技艺，构成了一个充满魅力和无限可能的美食世界。无论你来自哪里，都会被这独特的美食文化所吸引和感动。
+- **ASR (自动语音识别)**:
 
-</details>
+  - **ASR**: 使用 Whisper/SenseVoice 等模型进行高质量的语音转文本（ASR）
+  - **Force Aligment**: 使用 Whisper 模型可以进行【文稿匹配】提高识别准确性
 
-<details open>
-<summary>output</summary>
+- **工具 (Tools)**:
+  - **后处理工具 (Post Process)**: 提供音频剪辑、调整和增强等功能，优化生成的语音质量
 
-[long_text_demo.webm](https://github.com/lenML/ChatTTS-Forge/assets/37396659/fe18b0f1-a85f-4255-8e25-3c953480b881)
+### `launch.py`: API Server
 
-</details>
+某些情况，你并不需要 webui 或者需要更高的 api 吞吐，那么可以使用这个脚本启动单纯的 api 服务。
 
-## SSML
+启动：
 
-[SSML readme](./docs/SSML.md)
+```
+python launch.py
+```
 
-## Speaking style
+启动之后开启 `http://localhost:7870/docs` 可以查看开启了哪些 api 端点
 
-[style readme](./docs/sytles.md)
+更多帮助信息:
+
+- 通过 `python launch.py -h` 查看脚本参数
+- 查看 [API 文档](./docs/api.md)
+
+## Docker
+
+### 镜像
+
+WIP 开发中
+
+### 手动 build
+
+下载模型: `python -m scripts.download_models --source modelscope`
+
+> 此脚本将下载 `chat-tts` 和 `enhancer` 模型，如需下载其他模型，请看后续的 `模型下载` 介绍
+
+- webui: `docker-compose -f ./docker-compose.webui.yml up -d`
+- api: `docker-compose -f ./docker-compose.api.yml up -d`
+
+环境变量配置
+
+- webui: [.env.webui](./.env.webui)
+- api: [.env.api](./.env.api)
+
+## 模型支持
+
+| 模型类别        | 模型名称                                                           | 流式级别 | 支持多语言          | 实现情况    |
+| --------------- | ------------------------------------------------------------------ | -------- | ------------------- | ----------- |
+| **TTS**         | [ChatTTS](https://github.com/2noise/ChatTTS)                       | token 级 | en, zh              | ✅          |
+|                 | [FishSpeech](https://github.com/fishaudio/fish-speech)             | 句子级   | en, zh, jp, ko      | ✅ (1.4)    |
+|                 | [CosyVoice](https://github.com/FunAudioLLM/CosyVoice)              | 句子级   | en, zh, jp, yue, ko | ✅(v2)      |
+|                 | [FireRedTTS](https://github.com/FireRedTeam/FireRedTTS)            | 句子级   | en, zh              | ✅          |
+|                 | [F5-TTS](https://github.com/SWivid/F5-TTS)                         | 句子级   | en, zh              | ✅(v0.6/v1) |
+|                 | [Index-TTS](https://github.com/index-tts/index-tts)                | 句子级   | en, zh              | ✅(v1/v1.5) |
+|                 | [Spark-TTS](https://github.com/SparkAudio/Spark-TTS)               | 句子级   | en, zh              | ✅          |
+|                 | [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS/tree/main)     | 句子级   | en, zh, ja, ko, yue | ✅          |
+| **ASR**         | [Whisper](https://github.com/openai/whisper)                       | 🚧       | ✅                  | ✅          |
+|                 | [SenseVoice](https://github.com/FunAudioLLM/SenseVoice)            | 🚧       | ✅                  | ✅          |
+| **Voice Clone** | [OpenVoice](https://github.com/myshell-ai/OpenVoice)               |          |                     | ✅          |
+| **Enhancer**    | [ResembleEnhance](https://github.com/resemble-ai/resemble-enhance) |          |                     | ✅          |
+
+## 模型下载
+
+由于 Forge 主要面向 API 功能开发，目前尚未实现自动下载逻辑，下载模型需手动调用下载脚本，具体脚本位于 `./scripts` 目录下。
+
+### 下载脚本
+
+| 功能         | 模型             | 下载命令                                                                    |
+| ------------ | ---------------- | --------------------------------------------------------------------------- |
+| **TTS**      | ChatTTS          | `python -m scripts.dl_chattts --source huggingface`                         |
+|              | FishSpeech(1.4)  | `python -m scripts.downloader.fish_speech_1_4 --source huggingface`         |
+|              | GPT-SoVITS(v4)   | `python -m scripts.downloader.gpt_sovits_v4 --source huggingface`           |
+|              | CosyVoice(v2)    | `python -m scripts.downloader.cosyvoice2 --source huggingface`              |
+|              | FireRedTTS       | `python -m scripts.downloader.fire_red_tts --source huggingface`            |
+|              | Index-TTS-1.5    | `python -m scripts.downloader.index_tts_1_5 --source huggingface`           |
+|              | Index-TTS        | `python -m scripts.downloader.index_tts --source huggingface`               |
+|              | Spark-TTS        | `python -m scripts.downloader.spark_tts --source huggingface`               |
+|              | F5-TTS(v0.6)     | `python -m scripts.downloader.f5_tts --source huggingface`                  |
+|              | F5-TTS(v1)       | `python -m scripts.downloader.f5_tts_v1 --source huggingface`               |
+|              | F5-TTS(vocos)    | `python -m scripts.downloader.vocos_mel_24khz --source huggingface`         |
+| **ASR**      | Whisper V3       | `python -m scripts.downloader.faster_whisper --source huggingface`          |
+|              | Whisper V3 turbo | `python -m scripts.downloader.faster_whisper_v3_turbo --source huggingface` |
+|              | SenseVoice       | `python -m scripts.downloader.sensevoice_small --source huggingface`        |
+|              | fsmn-vad       | `python -m scripts.downloader.fsmn_vad --source huggingface`        |
+| **CV**       | OpenVoice        | `python -m scripts.downloader.open_voice --source huggingface`              |
+| **Enhancer** | 增强模型         | `python -m scripts.dl_enhance --source huggingface`                         |
+
+> **注意**：如果需要使用 ModelScope 下载模型，请使用 `--source modelscope`。部分模型可能无法使用 ModelScope 下载。
 
 ## FAQ
 
-### 什么是 Prompt1 和 Prompt2？
+[Goto Discussion Page](https://github.com/lenML/Speech-AI-Forge/discussions/242)
 
-Prompt1 和 Prompt2 都是系统提示（system prompt），区别在于插入点不同。因为测试发现当前模型对第一个 [Stts] token 非常敏感，所以需要两个提示。
+## 离线整合包
 
-- Prompt1 插入到第一个 [Stts] 之前
-- Prompt2 插入到第一个 [Stts] 之后
+感谢 @Phrixus2023 提供的整合包：
+https://pan.baidu.com/s/1Q1vQV5Gs0VhU5J76dZBK4Q?pwd=d7xu
 
-### 什么是 Prefix？
+相关讨论：
+https://github.com/lenML/Speech-AI-Forge/discussions/65
 
-Prefix 主要用于控制模型的生成能力，类似于官方示例中的 refine prompt。这个 prefix 中应该只包含特殊的非语素 token，如 `[laugh_0]`、`[oral_0]`、`[speed_0]`、`[break_0]` 等。
+# Documents
 
-### Style 中 `_p` 的区别是什么？
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lenML/Speech-AI-Forge)
 
-Style 中带有 `_p` 的使用了 prompt + prefix，而不带 `_p` 的则只使用 prefix。
+[Learn About Documents](https://github.com/lenML/Speech-AI-Forge/issues/240)
 
-# Docker
+# Contributing
 
-WIP 开发中
+To contribute, clone the repository, make your changes, commit and push to your clone, and submit a pull request.
+
+## format code
+
+```
+isort --profile black
+```
 
 # References
 
 - ChatTTS: https://github.com/2noise/ChatTTS
 - PaddleSpeech: https://github.com/PaddlePaddle/PaddleSpeech
+- resemble-enhance: https://github.com/resemble-ai/resemble-enhance
+- OpenVoice: https://github.com/myshell-ai/OpenVoice
+- FishSpeech: https://github.com/fishaudio/fish-speech
+- SenseVoice: https://github.com/FunAudioLLM/SenseVoice
+- CosyVoice: https://github.com/FunAudioLLM/CosyVoice
+- FireRedTTS: https://github.com/FireRedTeam/FireRedTTS
+- F5-TTS: https://github.com/SWivid/F5-TTS
+- Index-TTS: https://github.com/index-tts/index-tts
+- Spark-TTS: https://github.com/SparkAudio/Spark-TTS
+- GPT-SoVITS: https://github.com/RVC-Boss/GPT-SoVITS
+
+- Whisper: https://github.com/openai/whisper
+
+- ChatTTS 默认说话人: https://github.com/2noise/ChatTTS/issues/238

@@ -1,6 +1,8 @@
 import { client } from "./client.mjs";
 import { html, create, styled } from "./misc.mjs";
 
+import { useGlobalStore } from "./global.store.mjs";
+
 const sample_texts = [
   {
     text: "大🍌，一条大🍌，嘿，你的感觉真的很奇妙  [lbreak]",
@@ -69,16 +71,14 @@ const useStore = create((set, get) => ({
     spk: "female2",
     style: "chat",
     temperature: 0.3,
-    top_P: 1,
-    top_K: 20,
-    seed: -1,
+    top_p: 0.5,
+    top_k: 20,
+    seed: 42,
     format: "mp3",
     prompt1: "",
     prompt2: "",
     prefix: "",
   },
-  styles: [],
-  speakers: [],
 
   ui: {
     loading: false,
@@ -107,12 +107,6 @@ const useStore = create((set, get) => ({
       },
     });
   },
-  setStyles(styles) {
-    set({ styles });
-  },
-  setSpeakers(speakers) {
-    set({ speakers });
-  },
   setTTS(tts) {
     set({
       tts: {
@@ -130,15 +124,6 @@ const useStore = create((set, get) => ({
     });
   },
 }));
-
-window.addEventListener("load", async () => {
-  const styles = await client.listStyles();
-  const speakers = await client.listSpeakers();
-  console.log("styles:", styles);
-  console.log("speakers:", speakers);
-  useStore.get().setStyles(styles.data);
-  useStore.get().setSpeakers(speakers.data);
-});
 
 const TTSPageContainer = styled.div`
   h1 {
@@ -329,8 +314,8 @@ const TTSPageContainer = styled.div`
 `;
 
 export const TTSPage = () => {
-  const { tts, setTTS, synthesizeTTS, ui, setUI, speakers, styles } =
-    useStore();
+  const { tts, setTTS, synthesizeTTS, ui, setUI } = useStore();
+  const { speakers, styles, formats } = useGlobalStore();
 
   const request = async () => {
     if (ui.loading) {
@@ -340,6 +325,7 @@ export const TTSPage = () => {
     try {
       await synthesizeTTS();
     } catch (error) {
+      alert(error);
       console.error("Error synthesizing TTS:", error);
     } finally {
       setUI({ loading: false });
@@ -390,8 +376,8 @@ export const TTSPage = () => {
               <option value="-1">*random</option>
               ${speakers.map(
                 (spk) => html`
-                  <option key=${spk.index} value=${spk.name}>
-                    ${spk.name}
+                  <option key=${spk.data.id} value=${spk.data.meta.data.name}>
+                    ${spk.data.meta.data.name}
                   </option>
                 `
               )}
@@ -432,10 +418,10 @@ export const TTSPage = () => {
               min="0.01"
               max="1"
               step="0.01"
-              value=${tts.top_P}
-              onInput=${(e) => setTTS({ top_P: e.target.value })}
+              value=${tts.top_p}
+              onInput=${(e) => setTTS({ top_p: e.target.value })}
             />
-            ${tts.top_P}
+            ${tts.top_p}
           </label>
           <label>
             Top K:
@@ -444,10 +430,10 @@ export const TTSPage = () => {
               min="1"
               max="50"
               step="1"
-              value=${tts.top_K}
-              onInput=${(e) => setTTS({ top_K: e.target.value })}
+              value=${tts.top_k}
+              onInput=${(e) => setTTS({ top_k: e.target.value })}
             />
-            ${tts.top_K}
+            ${tts.top_k}
           </label>
           <label>
             Seed:
@@ -470,8 +456,10 @@ export const TTSPage = () => {
               value=${tts.format}
               onChange=${(e) => setTTS({ format: e.target.value })}
             >
-              <option value="mp3">MP3</option>
-              <option value="wav">WAV</option>
+              ${formats.map(
+                (format) =>
+                  html`<option key=${format} value=${format}>${format}</option>`
+              )}
             </select>
           </label>
           <label>
@@ -522,7 +510,9 @@ export const TTSPage = () => {
                       <audio controls>
                         <source
                           src=${item.url}
-                          type="audio/${item.params.format}"
+                          type="audio/${{
+                            raw: "wav",
+                          }[item.params.format] || item.params.format}"
                         />
                       </audio>
                     </td>

@@ -1,6 +1,8 @@
 import { client } from "./client.mjs";
 import { html, create, styled } from "./misc.mjs";
 
+import { useGlobalStore } from "./global.store.mjs";
+
 const default_ssml = `
 <speak version="0.1">
   <voice spk="Bob" seed="-1" style="narration-relaxed">
@@ -141,8 +143,9 @@ const SSMLFormContainer = styled.div`
 
 const SSMLOptions = () => {
   const { params, setParams } = useStore();
+  const { formats } = useGlobalStore();
   return html`
-    <fieldset style="flex: 2">
+    <fieldset style=${{ flex: 5 }}>
       <legend>Options</legend>
       <label>
         Format
@@ -150,8 +153,10 @@ const SSMLOptions = () => {
           value=${params.format}
           onChange=${(e) => setParams({ ...params, format: e.target.value })}
         >
-          <option value="mp3">MP3</option>
-          <option value="wav">WAV</option>
+          ${formats.map(
+            (format) =>
+              html` <option key=${format} value=${format}>${format}</option> `
+          )}
         </select>
       </label>
     </fieldset>
@@ -161,7 +166,7 @@ const SSMLOptions = () => {
 const SSMLHistory = () => {
   const { history } = useStore();
   return html`
-    <fieldset style="flex: 5">
+    <fieldset style=${{ flex: 5 }}>
       <legend>History</legend>
 
       <table>
@@ -180,7 +185,11 @@ const SSMLHistory = () => {
                 <td>
                   <textarea
                     readonly
-                    style="width: 100%; height: 5rem; resize: none;"
+                    style=${{
+                      with: "100%",
+                      height: "5rem",
+                      resize: "none",
+                    }}
                   >
                     ${item.params.ssml}
                   </textarea
@@ -190,7 +199,8 @@ const SSMLHistory = () => {
                   <audio controls>
                     <source
                       src=${item.url}
-                      type="audio/${item.params.format}"
+                      type="audio/${{ raw: "wav" }[item.params.format] ||
+                      item.params.format}"
                     />
                   </audio>
                 </td>
@@ -222,6 +232,9 @@ const SSMLForm = () => {
           },
         ],
       });
+    } catch(err) {
+      alert(err);
+      console.error(err);
     } finally {
       useStore.set({ loading: false });
     }

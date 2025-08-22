@@ -1,11 +1,15 @@
-import numpy as np
+from typing import Generator
+
 import torch
 
+from modules.core.models.tts.ChatTTS import ChatTTS
+from modules.core.models.tts.ChatTTS.ChatTTSInfer import ChatTTSInfer
+from modules.core.tools.SentenceSplitter import SentenceSplitter
 from modules.utils.SeedContext import SeedContext
 
-from modules import models, config
-
-
+"""
+TODO: 应该重构一下，增加 refine model 而不是从这里调用
+"""
 @torch.inference_mode()
 def refine_text(
     text: str,
@@ -16,21 +20,29 @@ def refine_text(
     temperature=0.7,
     repetition_penalty=1.0,
     max_new_token=384,
+    spliter_threshold=300,
 ) -> str:
-    chat_tts = models.load_chat_tts()
+    chat_tts = ChatTTS.load_chat_tts()
+
+    spliter = SentenceSplitter(spliter_threshold)
+    sentences = spliter.parse(text)
 
     with SeedContext(seed):
-        refined_text = chat_tts.refiner_prompt(
-            text,
-            {
-                "prompt": prompt,
-                "top_K": top_K,
-                "top_P": top_P,
-                "temperature": temperature,
-                "repetition_penalty": repetition_penalty,
-                "max_new_token": max_new_token,
-                "disable_tqdm": config.disable_tqdm,
-            },
-            do_text_normalization=False,
-        )
-        return refined_text
+        infer = ChatTTSInfer(chat_tts)
+        results: list[str] = []
+        for senc in sentences:
+            refined_text = infer.refine_text(
+                text=senc,
+                prompt=prompt,
+                top_P=top_P,
+                top_K=top_K,
+                temperature=temperature,
+                repetition_penalty=repetition_penalty,
+                max_new_token=max_new_token,
+            )
+            if isinstance(refined_text, Generator):
+                refined_text = list(refined_text)
+            if isinstance(refined_text, list):
+                refined_text = "\n".join(refined_text)
+            results.append(refined_text)
+        return "\n".join(results).strip()

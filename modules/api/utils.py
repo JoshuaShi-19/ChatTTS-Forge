@@ -1,43 +1,28 @@
+from typing import Any, Dict, Union
+
+import numpy as np
 from pydantic import BaseModel
-from typing import Any
-
-import torch
-
-from modules.speaker import Speaker, speaker_mgr
-
-
-from modules.data import styles_mgr
-
 from pydub import AudioSegment
 
-from modules.ssml import merge_prompt
-
-
-from enum import Enum
+from modules.core.spk.SpkMgr import spk_mgr
+from modules.data import styles_mgr
 
 
 class ParamsTypeError(Exception):
     pass
 
 
-class AudioFormat(str, Enum):
-    mp3 = "mp3"
-    wav = "wav"
-
-
 class BaseResponse(BaseModel):
     message: str
     data: Any
 
-    class Config:
-        json_encoders = {
-            torch.Tensor: lambda v: v.tolist(),
-            Speaker: lambda v: v.to_json(),
-        }
+
+def success_response(data: Any, message: str = "ok") -> BaseResponse:
+    return BaseResponse(message=message, data=data)
 
 
 def wav_to_mp3(wav_data, bitrate="48k"):
-    audio = AudioSegment.from_wav(
+    audio: AudioSegment = AudioSegment.from_wav(
         wav_data,
     )
     return audio.export(format="mp3", bitrate=bitrate)
@@ -51,13 +36,36 @@ def to_number(value, t, default=0):
         return default
 
 
-def calc_spk_style(spk: str | int, style: str | int):
+def merge_prompt(attrs: dict, elem: Dict[str, Any]):
+
+    def attr_num(attrs: Dict[str, Any], k: str, min_value: int, max_value: int):
+        val = elem.get(k, attrs.get(k, ""))
+        if val == "":
+            return
+        if val == "max":
+            val = max_value
+        if val == "min":
+            val = min_value
+        val = np.clip(int(val), min_value, max_value)
+        if "prompt" not in attrs or attrs["prompt"] == None:
+            attrs["prompt"] = ""
+        attrs["prompt"] += " " + f"[{k}_{val}]"
+
+    attr_num(attrs, "oral", 0, 9)
+    attr_num(attrs, "speed", 0, 9)
+    attr_num(attrs, "laugh", 0, 2)
+    attr_num(attrs, "break", 0, 7)
+
+
+def calc_spk_style(
+    spk: Union[str, int, None] = None, style: Union[str, int, None] = None
+):
     voice_attrs = {
         "spk": None,
-        "seed": None,
         "prompt1": None,
         "prompt2": None,
         "prefix": None,
+        "prompt": None,
         "temperature": None,
     }
     params = {}
@@ -68,7 +76,7 @@ def calc_spk_style(spk: str | int, style: str | int):
         if spk.isdigit():
             voice_attrs["spk"] = int(spk)
         else:
-            spker = speaker_mgr.get_speaker(spk)
+            spker = spk_mgr.get_speaker(spk)
             if spker:
                 voice_attrs["spk"] = spker
 
@@ -87,7 +95,6 @@ def calc_spk_style(spk: str | int, style: str | int):
     merge_prompt(voice_attrs, params)
 
     voice_attrs["spk"] = params.get("spk", voice_attrs.get("spk", None))
-    voice_attrs["seed"] = params.get("seed", voice_attrs.get("seed", None))
     voice_attrs["temperature"] = params.get(
         "temp", voice_attrs.get("temperature", None)
     )

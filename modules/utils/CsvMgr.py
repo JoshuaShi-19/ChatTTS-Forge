@@ -1,8 +1,8 @@
-import pandas as pd
-import os
 import json
-
 import logging
+import os
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,7 @@ class DataNotFoundError(Exception):
     pass
 
 
+# FIXME: 😓这个东西写的比较拉跨，最好找个什么csv库替代掉...
 class BaseManager:
     def __init__(self, csv_file):
         self.csv_file = csv_file

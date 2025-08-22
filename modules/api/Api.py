@@ -1,11 +1,9 @@
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-
+import fnmatch
 import logging
 
+from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
-
-import fnmatch
+from starlette.responses import FileResponse
 
 
 def is_excluded(path, exclude_patterns):
@@ -23,18 +21,57 @@ def is_excluded(path, exclude_patterns):
     return False
 
 
-class APIManager:
-    def __init__(self, no_docs=False, exclude_patterns=[]):
-        self.app = FastAPI(
-            title="ChatTTS Forge API",
-            description="ChatTTS-Forge 是一个功能强大的文本转语音生成工具，支持通过类 SSML 语法生成丰富的音频长文本，并提供全面的 API 服务，适用于各种场景。\n\nChatTTS-Forge is a powerful text-to-speech generation tool that supports generating rich audio long texts through class SSML syntax\n\n https://github.com/lenML/ChatTTS-Forge",
-            version="0.1.0",
-            redoc_url=None if no_docs else "/redoc",
-            docs_url=None if no_docs else "/docs",
+CURRENT_CDN = "fastly.jsdelivr.net"
+
+# 备选 CDN
+# 节点                      描述            可用性
+# gcore.jsdelivr.net	    Gcore 节点	    可用性高
+# testingcf.jsdelivr.net	Cloudflare 节点	可用性高
+# quantil.jsdelivr.net	    Quantil 节点	可用性一般
+# fastly.jsdelivr.net	    Fastly 节点	    可用性一般
+# originfastly.jsdelivr.net	Fastly 节点	    可用性低
+# test1.jsdelivr.net	    Cloudflare 节点	可用性低
+# cdn.jsdelivr.net	        通用节点	    可用性低
+
+
+class CustomStaticFiles(StaticFiles):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if not isinstance(response, FileResponse):
+            return response
+        content_type = response.headers.get("Content-Type") or ""
+        if "text/html" not in content_type:
+            return response
+        request = Request(scope)
+        cdn_host = request.query_params.get("cdn_host")
+        if cdn_host:
+            response = self.replace_cdn_host(response, cdn_host)
+        return response
+
+    def replace_cdn_host(self, response: FileResponse, cdn_host: str):
+        content_path = response.path
+        with open(content_path, "rb") as f:
+            content_bytes = f.read()
+        content = content_bytes.decode("utf-8")
+        content = content.replace(CURRENT_CDN, cdn_host)
+        del response.headers["Content-Length"]
+        new_response = Response(
+            content, headers=response.headers, media_type=response.media_type
         )
+        return new_response
+
+
+class APIManager:
+    def __init__(self, app: FastAPI, exclude_patterns=[]):
+        self.app = app
         self.registered_apis = {}
         self.logger = logging.getLogger(__name__)
         self.exclude = exclude_patterns
+
+        self.cors_enabled = False
 
     def is_excluded(self, path):
         return is_excluded(path, self.exclude)
@@ -46,19 +83,54 @@ class APIManager:
         allow_methods: list = ["*"],
         allow_headers: list = ["*"],
     ):
-        self.app.add_middleware(
-            CORSMiddleware,
-            allow_origins=allow_origins,
-            allow_credentials=allow_credentials,
-            allow_methods=allow_methods,
-            allow_headers=allow_headers,
-        )
+        if self.cors_enabled:
+            raise Exception("CORS is already enabled")
+        self.cors_enabled = True
+
+        # NOTE: 为什么不用 CORSMiddleware ? 因为就是各种无效... 所以单独写了一个
+        # 参考： https://github.com/fastapi/fastapi/issues/1663
+        async def _set_cors_headers(response: Response, origin: str = None):
+            """设置CORS响应头"""
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = ", ".join(allow_methods)
+            response.headers["Access-Control-Allow-Headers"] = ", ".join(allow_headers)
+            if allow_credentials:
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+
+        @self.app.middleware("http")
+        async def cors_handler(request: Request, call_next):
+            response: Response = await call_next(request)
+
+            origin = request.headers.get("Origin")
+
+            if "*" in allow_origins:
+                if allow_credentials and origin:
+                    # 当允许凭证时，需要匹配具体来源
+                    await _set_cors_headers(response, origin)
+                else:
+                    # 否则直接允许所有来源
+                    await _set_cors_headers(response, "*")
+            elif origin and (origin in allow_origins):
+                await _set_cors_headers(response, origin)
+
+            # 处理预检请求
+            if request.method == "OPTIONS":
+                response.status_code = 200
+                if not response.headers.get("Access-Control-Allow-Origin"):
+                    if "*" in allow_origins:
+                        await _set_cors_headers(response, "*")
+                    else:
+                        await _set_cors_headers(response, origin)
+                else:
+                    await _set_cors_headers(response)
+            return response
 
     def setup_playground(self):
         app = self.app
         app.mount(
             "/playground",
-            StaticFiles(directory="playground", html=True),
+            CustomStaticFiles(directory="playground", html=True),
             name="playground",
         )
 

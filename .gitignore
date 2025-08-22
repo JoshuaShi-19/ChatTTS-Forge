@@ -1,3 +1,4 @@
+.idea
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -165,3 +166,58 @@ cython_debug/
 *.wav
 *.mp3
 *.webm
+
+# models
+/models/**/*.pt
+/models/**/*.pth
+/models/**/*.md
+/models/**/*.bin
+/models/**/*.json
+/models/**/*.onnx
+/models/**/*.yaml
+/models/**/*.txt
+/models/**/*.safetensors
+/models/cache
+/models/**/.huggingface
+/models/**/.gitattributes
+/models/**/.gitignore
+# NOTE: 为什么这样一个一个写？ A：因为有的模型可能需要一些内容保存到库里...比如resemble-enhance 的 yaml 配置文件
+/models/CosyVoice_*/**/*
+/models/whisper/**/*
+/models/F5-TTS/**/*
+/models/vocos-mel-24khz/**/*
+/models/Index-TTS/**/*
+/models/Spark-TTS-0.5B/**/*
+/models/SenseVoiceSmall/**/*
+/models/gpt_sovits_v4/**/*
+/models/gpt_sovits_v3/**/*
+/models/Index-TTS-1.5/**/*
+/models/fsmn-vad/**/*
+
+/*.pt
+
+/ffmpeg/ffmpeg
+/ffmpeg/ffprobe
+/ffmpeg/ffplay
+/ffmpeg/ffmpeg.exe
+/ffmpeg/ffprobe.exe
+/ffmpeg/ffplay.exe
+
+.vscode
+
+tests/test_outputs
+!tests/test_inputs/**/*.wav
+
+/datasets/data_*
+
+test*.json
+test*.vtt
+test*.srt
+test*.tsv
+
+.DS_Store
+
+# index tts 的测试音频 官方repo里面拷贝过来的
+!tests/demo/index_tts/sample_prompt.wav
+
+demo_*.json
